@@ -64,7 +64,6 @@ iframe {
 </div>
 
 <script>
-// ───── FETCH LATEST FROM VOCADB ─────
 fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=10")
   .then(res => res.json())
   .then(data => {
@@ -80,14 +79,35 @@ fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=10")
     }
 
     const pv = song.pvs.find(p => p.service === "Youtube");
-    const videoId = new URL(pv.url).searchParams.get("v");
+
+    let videoId = null;
+
+    // ───── FIX: handle multiple YouTube URL formats ─────
+    if (pv.url.includes("watch?v=")) {
+      videoId = pv.url.split("watch?v=")[1].split("&")[0];
+    } 
+    else if (pv.url.includes("youtu.be/")) {
+      videoId = pv.url.split("youtu.be/")[1].split("?")[0];
+    }
+
+    if (!videoId) {
+      document.getElementById("songTitle").innerText =
+        "YouTube link format not supported";
+      return;
+    }
 
     document.getElementById("player").src =
       "https://www.youtube.com/embed/" + videoId + "?controls=1";
 
     document.getElementById("songTitle").innerText = song.name;
+  })
+  .catch(err => {
+    document.getElementById("songTitle").innerText =
+      "Failed to load VocaDB data";
+    console.log(err);
   });
 </script>
+
 
 </body>
 </html>
