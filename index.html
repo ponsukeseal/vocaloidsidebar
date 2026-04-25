@@ -5,7 +5,6 @@
 <title>Vocaloid Sidebar</title>
 
 <style>
-/* ───── GLOBAL ───── */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -16,8 +15,6 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
-  cursor: none; /* hide default cursor */
 }
 
 /* dark overlay */
@@ -26,28 +23,8 @@ body::before {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.55);
-  z-index: 0;
 }
 
-/* ───── CUSTOM CURSOR ───── */
-.cursor {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #22d3ee;
-  border-radius: 50%;
-  position: fixed;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 9999;
-  transition: transform 0.08s ease;
-}
-
-a:hover ~ .cursor,
-button:hover ~ .cursor {
-  transform: translate(-50%, -50%) scale(1.8);
-}
-
-/* ───── CONTENT ───── */
 .container {
   position: relative;
   z-index: 1;
@@ -62,69 +39,33 @@ h2 {
 
 iframe {
   width: 100%;
-  height: 140px;
+  height: 80px; /* compact audio style */
   border: none;
   border-radius: 10px;
 }
 
 .title {
   font-size: 12px;
-  margin-top: 5px;
+  margin-top: 6px;
   opacity: 0.9;
-}
-
-.box {
-  margin-bottom: 15px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="cursor" id="cursor"></div>
-
 <div class="container">
 
-  <!-- 🎤 SONG OF THE DAY -->
-  <div class="box">
-    <h2>🎤 Song of the Day</h2>
-    <iframe id="sotd"></iframe>
-    <div class="title" id="sotdTitle">Loading...</div>
-  </div>
+  <h2>🆕 Latest Vocaloid Release</h2>
 
-  <!-- 🆕 LATEST VOCALOID -->
-  <div class="box">
-    <h2>🆕 Latest Vocaloid</h2>
-    <iframe id="latest"></iframe>
-    <div class="title" id="latestTitle">Loading...</div>
-  </div>
+  <iframe id="player"></iframe>
+  <div class="title" id="songTitle">Loading...</div>
 
 </div>
 
 <script>
-// ───── CUSTOM CURSOR MOVE ─────
-const cursor = document.getElementById("cursor");
-
-document.addEventListener("mousemove", e => {
-  cursor.style.left = e.clientX + "px";
-  cursor.style.top = e.clientY + "px";
-});
-
-
-// ───── SONG OF THE DAY (MANUAL) ─────
-const SOTD = {
-  title: "Your Song Here",
-  videoId: "VIDEO_ID"
-};
-
-document.getElementById("sotd").src =
-  "https://www.youtube.com/embed/" + SOTD.videoId;
-
-document.getElementById("sotdTitle").innerText = SOTD.title;
-
-
-// ───── LATEST FROM VOCADB ─────
-fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=5")
+// ───── FETCH LATEST FROM VOCADB ─────
+fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=10")
   .then(res => res.json())
   .then(data => {
 
@@ -132,14 +73,19 @@ fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=5")
       s.pvs && s.pvs.some(p => p.service === "Youtube")
     );
 
-    if (!song) return;
+    if (!song) {
+      document.getElementById("songTitle").innerText =
+        "No YouTube preview found";
+      return;
+    }
 
     const pv = song.pvs.find(p => p.service === "Youtube");
+    const videoId = new URL(pv.url).searchParams.get("v");
 
-    document.getElementById("latestTitle").innerText = song.name;
+    document.getElementById("player").src =
+      "https://www.youtube.com/embed/" + videoId + "?controls=1";
 
-    document.getElementById("latest").src =
-      "https://www.youtube.com/embed/" + pv.url.split("v=")[1];
+    document.getElementById("songTitle").innerText = song.name;
   });
 </script>
 
