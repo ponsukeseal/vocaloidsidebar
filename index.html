@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: #e2e8f0;
+    text-align: center;
+  }
+
+  h2 {
+    color: #22d3ee;
+    font-size: 15px;
+    margin: 8px 0;
+  }
+
+  iframe {
+    width: 100%;
+    height: 140px;
+    border: none;
+    border-radius: 10px;
+  }
+
+  .box {
+    padding: 10px;
+  }
+
+  .title {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>🎤 Song of the Day</h2>
+  <iframe id="sotd"></iframe>
+  <div class="title" id="sotdTitle"></div>
+</div>
+
+<div class="box">
+  <h2>🆕 Latest Vocaloid</h2>
+  <iframe id="latest"></iframe>
+  <div class="title" id="latestTitle">Loading...</div>
+</div>
+
+<script>
+// 🔧 EDIT THIS DAILY
+const SOTD = {
+  title: "Your Song Here",
+  videoId: "VIDEO_ID"
+};
+
+document.getElementById("sotd").src =
+  "https://www.youtube.com/embed/" + SOTD.videoId;
+
+document.getElementById("sotdTitle").innerText = SOTD.title;
+
+
+// 🆕 AUTO FETCH FROM VOCADB
+fetch("https://vocadb.net/api/songs?sort=PublishDate&maxResults=5")
+  .then(res => res.json())
+  .then(data => {
+
+    // find first song with YouTube PV
+    let songWithPV = data.items.find(song =>
+      song.pvs && song.pvs.some(p => p.service === "Youtube")
+    );
+
+    if (!songWithPV) return;
+
+    const pv = songWithPV.pvs.find(p => p.service === "Youtube");
+
+    document.getElementById("latest").src =
+      "https://www.youtube.com/embed/" + pv.url.split("v=")[1];
+
+    document.getElementById("latestTitle").innerText =
+      songWithPV.name;
+  });
+</script>
+
+</body>
+</html>
